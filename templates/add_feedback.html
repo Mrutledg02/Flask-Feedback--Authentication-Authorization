@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+    <h1>Add Feedback</h1>
+    {% if 'username' in session %}
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <div>
+            {{ form.title.label }}<br>
+            {{ form.title(size=50) }}
+            {% for error in form.title.errors %}
+            <span style="color: red;">{{ error }}</span>
+            {% endfor %}
+        </div>
+        <div>
+            {{ form.content.label }}<br>
+            {{ form.content(cols=50, rows=10) }}
+            {% for error in form.content.errors %}
+            <span style="color: red;">{{ error }}</span>
+            {% endfor %}
+        </div>
+        <div>
+            <input type="submit" value="Submit">
+        </div>
+    </form>
+    {% else %}
+    <p>You must be logged in to access this page.</p>
+    <p><a href="{{ url_for('login') }}">Log in</a></p>
+    {% endif %}
+{% endblock %}
