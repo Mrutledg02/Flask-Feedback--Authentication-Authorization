@@ -1,32 +1,39 @@
 {% extends 'base.html' %}
 {% block content %}
 
+<div class="container">
+    <div class="jumbotron">
+        <h1 class="display-4">User Profile</h1>
+        <hr class="my-4">
+        <div class="profile-info">
+            <p class="lead">Welcome back, {{ user.username }}!</p>
+            <ul class="list-unstyled">
+                <li><strong>Email:</strong> {{ user.email }}</li>
+                <li><strong>First Name:</strong> {{ user.first_name }}</li>
+                <li><strong>Last Name:</strong> {{ user.last_name }}</li>
+            </ul>
+        </div>
+    </div>
 
-<h1 class="display-4">User Profile</h1>
-<div>
+    <h2 class="display-5">Feedback</h2>
+    {% for fb in feedback %}
+    <div class="card my-3">
+        <div class="card-body">
+            <h3 class="card-title">{{ fb.title }}</h3>
+            <p class="card-text">{{ fb.content }}</p>
+            <a href="{{ url_for('update_feedback', feedback_id=fb.id) }}" class="btn btn-primary">Edit</a>
+            <form method="POST" action="{{ url_for('delete_feedback', feedback_id=fb.id) }}" style="display: inline;">
+                <button type="submit" class="btn btn-danger">Delete</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
 
-<p class="lead">Welcome back, {{ user.username }}!</p>  <!-- user is a variable that is passed in from the view function -->
-<p><strong>Email:</strong> {{ user.email }}</p>
-<p><strong>First Name:</strong> {{ user.first_name }}</p>
-<p><strong>Last Name:</strong> {{ user.last_name }}</p>
-
-</div>
-<h2 class="display-5">Feedback</h2>
-{% for fb in feedback %}
-<div>
-    <h3>{{ fb.title }}</h3>
-    <p>{{ fb.content }}</p>
-    <a href="{{ url_for('update_feedback', feedback_id=fb.id) }}">Edit</a>
-    <form method="POST" action="{{ url_for('delete_feedback', feedback_id=fb.id) }}">
-        <button type="submit" onclick="return confirm('Are you sure you want to delete this feedback?')">Delete</button>
+    <a href="{{ url_for('add_feedback', username=user.username) }}" class="btn btn-success">Add Feedback</a>
+    <form method="POST" action="{{ url_for('delete_user', username=user.username) }}" style="display: inline;">
+        <button type="submit" class="btn btn-danger">Delete User</button>
     </form>
+    <a href="/logout" class="btn btn-secondary">Logout</a>
 </div>
-{% endfor %}
 
-<a href="{{ url_for('add_feedback', username=user.username) }}">Add Feedback</a>
-<form method="POST" action="{{ url_for('delete_user', username=user.username) }}">
-    <button type="submit">Delete User</button>
-</form>
-<a href="/logout">Logout</a>
-    
-    {% endblock %}  <!-- end of the content block -->
+{% endblock %}

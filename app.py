@@ -119,9 +119,12 @@ def user_profile(username):
         return redirect(url_for('homepage'))
 
 def is_admin(username):
-    user = User.query.get(username)
-    return user.is_admin if user else False
-    
+    """Check if the user is an admin."""
+    user = User.query.filter_by(username=username).first()
+    if user:
+        return user.is_admin
+    return False
+
 @app.route('/users/<username>/delete', methods=['POST'])
 def delete_user(username):
     """Delete user account."""
@@ -175,7 +178,7 @@ def add_feedback(username):
     
     return render_template('add_feedback.html', form=form)
 
-@app.route('/feedback/<int:feedback_id>/update', methods=['GET', 'POST'])
+@app.route('/feedback/<int:feedback_id>/update', methods=['POST'])
 def update_feedback(feedback_id):
     """Update feedback."""
     if 'username' not in session:
@@ -183,27 +186,29 @@ def update_feedback(feedback_id):
         return redirect(url_for('login'))
 
     feedback = Feedback.query.get_or_404(feedback_id)
-    
-    if not is_admin(session['username']) and session['username'] != feedback.username:
-        flash('You are not authorized to update this feedback', 'danger')
-        return redirect(url_for('homepage'))
 
-    # Create a form and populate it with the current feedback data
+    if not is_admin(session['username']) and session['username'] != feedback.username:
+        abort(401)
+
     form = FeedbackForm()
-    if request.method == 'GET':
-        form.title.data = feedback.title
-        form.content.data = feedback.content
 
     if form.validate_on_submit():
-        # Update the feedback with the edited data
         feedback.title = form.title.data
         feedback.content = form.content.data
+        
+        # Set the username attribute of the feedback to the current user's username
+        feedback.username = session['username']
+        
         db.session.commit()
 
         flash('Feedback updated successfully', 'success')
         return redirect(url_for('user_profile', username=session['username']))
 
+    form.title.data = feedback.title
+    form.content.data = feedback.content
+
     return render_template('update_feedback.html', form=form)
+
 
 @app.route('/feedback/<int:feedback_id>/delete', methods=['POST'])
 def delete_feedback(feedback_id):
@@ -215,8 +220,7 @@ def delete_feedback(feedback_id):
     feedback = Feedback.query.get_or_404(feedback_id)
 
     if not is_admin(session['username']) and session['username'] != feedback.username:
-        flash('You are not authorized to delete this feedback', 'danger')
-        return redirect(url_for('homepage'))
+        abort(401)
     
     db.session.delete(feedback)
     db.session.commit()
