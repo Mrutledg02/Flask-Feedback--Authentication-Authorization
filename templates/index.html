@@ -11,8 +11,9 @@
   {% endif %}
 
   {% if 'username' in session %}
-    <li><a href="/logout">Logout</a></li>
-    <li><a href="/secret">Secret</a></li>
+    {% set username = session['username'] %}
+    {% set redirect_url = url_for('user_profile', username=username) %}
+    <script>window.location.href = "{{ redirect_url }}";</script>
   {% endif %}
 </ul>
 

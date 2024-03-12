@@ -18,6 +18,13 @@
         <div class="mt-4">
             <h2>{% block page_title %}{% endblock %}</h2>
             <hr>
+            <div class="container" style="margin-top: 2em">
+                {% for category, msg in get_flashed_messages(with_categories=true) %}
+                <div class="alert alert-{{ category }}" role="alert">
+                    {{ msg }}
+                </div>
+                {% endfor %}
+            </div>
             <div class="content">
                 {% block content %}{% endblock %}
             </div>

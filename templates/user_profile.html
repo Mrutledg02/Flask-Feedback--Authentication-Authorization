@@ -21,10 +21,12 @@
         <div class="card-body">
             <h3 class="card-title">{{ fb.title }}</h3>
             <p class="card-text">{{ fb.content }}</p>
-            <a href="{{ url_for('update_feedback', feedback_id=fb.id) }}" class="btn btn-primary">Edit</a>
-            <form method="POST" action="{{ url_for('delete_feedback', feedback_id=fb.id) }}" style="display: inline;">
-                <button type="submit" class="btn btn-danger">Delete</button>
-            </form>
+            {% if is_admin or session['username'] == fb.username %}
+                <a href="{{ url_for('update_feedback', feedback_id=fb.id) }}" class="btn btn-primary">Edit</a>
+                <form method="POST" action="{{ url_for('delete_feedback', feedback_id=fb.id) }}" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            {% endif %}
         </div>
     </div>
     {% endfor %}
@@ -33,7 +35,9 @@
     <form method="POST" action="{{ url_for('delete_user', username=user.username) }}" style="display: inline;">
         <button type="submit" class="btn btn-danger">Delete User</button>
     </form>
-    <a href="/logout" class="btn btn-secondary">Logout</a>
+    <form id="logout-form" action="/logout" method="POST" style="display: inline;">
+        <button type="submit" class="btn btn-secondary">Logout</button>
+    </form>
 </div>
 
 {% endblock %}

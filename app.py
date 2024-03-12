@@ -6,6 +6,7 @@ from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, Email
 from models import User, Feedback, db, bcrypt, connect_db
 from forms import RegistrationForm, LoginForm, FeedbackForm
+from sqlalchemy.exc import IntegrityError
 
 # Create Flask app
 app = Flask(__name__)
@@ -54,8 +55,10 @@ def register():
         # Create new user
         user = User.register(username, password, email, first_name, last_name, is_admin)
         db.session.add(user)
-        db.session.commit()
-
+        try:
+            db.session.commit()
+        except IntegrityError:
+            form.username.errors.append('Username already exists')
         # Store username in session
         session['username'] = username
         flash('User created successfully', 'success')
@@ -110,7 +113,7 @@ def user_profile(username):
 
     if user:
         # Get feedback for the user
-        feedback = Feedback.query.filter_by(username=username).all()
+        feedback = Feedback.query.all()
 
         # Render user profile template with user and feedback data
         return render_template('user_profile.html', user=user, feedback=feedback)
@@ -139,13 +142,15 @@ def delete_user(username):
     user = User.query.filter_by(username=username).first()
 
     if user:
-        db.session.delete(user)
-        db.session.commit()
-
-        session.pop('username', None)
-        flash('User account deleted successfully', 'success')
-        
-        return redirect(url_for('homepage'))
+        try:
+            db.session.delete(user)
+            db.session.commit()
+            session.pop('username', None)
+            flash('User account deleted successfully', 'success')
+            return redirect(url_for('homepage'))
+        except IntegrityError:
+            flash('User cannot be deleted because they have associated feedback', 'danger')
+            return redirect(url_for('user_profile', username=username))
     else:
         flash('User not found', 'danger')
         return redirect(url_for('homepage'))
@@ -178,7 +183,7 @@ def add_feedback(username):
     
     return render_template('add_feedback.html', form=form)
 
-@app.route('/feedback/<int:feedback_id>/update', methods=['POST'])
+@app.route('/feedback/<int:feedback_id>/update', methods=['GET', 'POST'])
 def update_feedback(feedback_id):
     """Update feedback."""
     if 'username' not in session:
@@ -228,13 +233,17 @@ def delete_feedback(feedback_id):
     flash('Feedback deleted successfully', 'success')
     return redirect(url_for('user_profile', username=feedback.username))
     
-@app.route('/logout')
+@app.route('/logout', methods=['POST'])
 def logout():
     """Logout a user."""
-    # Clear session
-    session.pop('username', None)
-    flash('You have been logged out', 'info')
-    return redirect("/")  # Redirect to desired page after logout
+    if request.method == 'POST':
+        # Clear session
+        session.pop('username', None)
+        flash('You have been logged out', 'info')
+        return redirect("/")  # Redirect to desired page after logout
+    else:
+        # Handle other request methods (GET, etc.)
+        return abort(405)  # Method Not Allowed
 
 @app.errorhandler(404)
 def not_found_error(error):
